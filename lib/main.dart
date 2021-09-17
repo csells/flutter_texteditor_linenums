@@ -117,8 +117,9 @@ class _TextEditorWithLineNumbersState extends State<TextEditorWithLineNumbers> {
   void _textChanged(String value) {
     final ets = _getEditableTextState(_textFocusNode);
     if (ets != null) {
-      final offsets = _getNewlineOffsets(value);
-      final selections = _getTextSelections(offsets);
+      final lengths = _getLineLengths(value);
+      final selections = _getTextSelections(lengths);
+      print('');
       final heights = [for (final sel in selections) _getLineHeight(ets, sel)];
       setState(() => _lineHeights = heights.toList());
     }
@@ -134,29 +135,40 @@ class _TextEditorWithLineNumbersState extends State<TextEditorWithLineNumbers> {
     return (focus.context! as StatefulElement).state as EditableTextState;
   }
 
-  Iterable<int> _getNewlineOffsets(String text) sync* {
+  Iterable<int> _getLineLengths(String text) sync* {
+    if (text.isEmpty) {
+      yield 0;
+      return;
+    }
+
     var start = 0;
     for (;;) {
       final i = text.indexOf('\n', start);
       if (i == -1) break;
-      yield i;
+      yield i - start + 1;
       start = i + 1;
     }
 
-    // dummy one up for the last line
-    yield text.length - 1;
+    final len = text.length;
+    if (start < len) yield len - start;
+
+    if (text.endsWith('\n')) yield 0;
   }
 
-  Iterable<TextSelection> _getTextSelections(Iterable<int> offsets) sync* {
+  Iterable<TextSelection> _getTextSelections(Iterable<int> lengths) sync* {
     var base = 0;
-    for (final extent in offsets) {
-      yield TextSelection(baseOffset: base, extentOffset: extent);
-      base = extent + 1;
+    for (final length in lengths) {
+      yield TextSelection(
+          baseOffset: base,
+          extentOffset: length == 0 ? base : base + length - 1);
+      base = base + length;
     }
   }
 
   double _getLineHeight(EditableTextState ets, TextSelection selection) {
     final tsps = ets.renderEditable.getEndpointsForSelection(selection);
+    print(
+        '_getLineHeight: first.dy= ${tsps.first.point.dy}, last.dy= ${tsps.last.point.dy}');
     return tsps.last.point.dy - tsps.first.point.dy + 19; // HACK
   }
 }
@@ -176,7 +188,7 @@ class SizeChangedNotifier extends StatefulWidget {
 }
 
 class _SizeChangedNotifierState extends State<SizeChangedNotifier> {
-  var _constraints = BoxConstraints.tight(Size.zero);
+  BoxConstraints? _constraints;
 
   @override
   Widget build(BuildContext context) => LayoutBuilder(
@@ -193,6 +205,6 @@ class _SizeChangedNotifierState extends State<SizeChangedNotifier> {
   @override
   void didChangeDependencies() {
     super.didChangeDependencies();
-    _constraints = BoxConstraints.tight(Size.zero);
+    _constraints = null;
   }
 }
