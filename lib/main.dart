@@ -156,7 +156,6 @@ class _TextEditorWithLineNumbersState extends State<TextEditorWithLineNumbers> {
     final tsps = ets.renderEditable.getEndpointsForSelection(selection);
     return tsps.last.point.dy - tsps.first.point.dy + 19; // HACK
   }
-
 }
 
 // TODO: fix the fencepost!
