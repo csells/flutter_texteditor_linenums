@@ -45,7 +45,7 @@ class _TextEditorWithLineNumbersState extends State<TextEditorWithLineNumbers> {
   late final ScrollController _numbersScroll;
   late final TextStyle _textStyle;
   final _textFocusNode = FocusNode();
-  List<double> _lineHeights = [19];
+  List<double> _lineHeights = [];
 
   @override
   void initState() {
@@ -120,7 +120,11 @@ class _TextEditorWithLineNumbersState extends State<TextEditorWithLineNumbers> {
       final lengths = _getLineLengths(value);
       final selections = _getTextSelections(lengths);
       print('');
-      final heights = [for (final sel in selections) _getLineHeight(ets, sel)];
+      final singleLineHeight = _getSingleLineHeight(ets);
+      final heights = [
+        for (final sel in selections)
+          _getWrappedLineHeight(ets, sel, singleLineHeight)
+      ];
       setState(() => _lineHeights = heights.toList());
     }
   }
@@ -145,7 +149,7 @@ class _TextEditorWithLineNumbersState extends State<TextEditorWithLineNumbers> {
     for (;;) {
       final i = text.indexOf('\n', start);
       if (i == -1) break;
-      yield i - start + 1;
+      yield i - start;
       start = i + 1;
     }
 
@@ -161,16 +165,28 @@ class _TextEditorWithLineNumbersState extends State<TextEditorWithLineNumbers> {
       yield TextSelection(
           baseOffset: base,
           extentOffset: length == 0 ? base : base + length - 1);
-      base = base + length;
+      base = base + length + 1;
     }
   }
 
-  double _getLineHeight(EditableTextState ets, TextSelection selection) {
-    final tsps = ets.renderEditable.getEndpointsForSelection(selection);
-    print(
-        '_getLineHeight: first.dy= ${tsps.first.point.dy}, last.dy= ${tsps.last.point.dy}');
-    return tsps.last.point.dy - tsps.first.point.dy + 19; // HACK
-  }
+double _getSingleLineHeight(EditableTextState ets) => ets.renderEditable
+    .getEndpointsForSelection(const TextSelection.collapsed(offset: 0))
+    .first
+    .point
+    .dy
+    .floorToDouble();
+
+double _getWrappedLineHeight(
+  EditableTextState ets,
+  TextSelection selection,
+  double singleLineHeight,
+) {
+  final tsps = ets.renderEditable.getEndpointsForSelection(selection);
+  final height = tsps.last.point.dy - tsps.first.point.dy + singleLineHeight;
+  print(
+      '_getWrappedLineHeight for baseOffset= ${selection.baseOffset}, extentOffset= ${selection.extentOffset}: first.dy= ${tsps.first.point.dy}, last.dy= ${tsps.last.point.dy} is $height');
+  return height;
+}
 }
 
 class SizeChangedNotifier extends StatefulWidget {
