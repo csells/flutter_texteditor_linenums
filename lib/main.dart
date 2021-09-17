@@ -83,10 +83,7 @@ class _TextEditorWithLineNumbersState extends State<TextEditorWithLineNumbers> {
                 physics: null,
                 itemBuilder: (context, index) => SizedBox(
                   height: _lineHeights[index],
-                  child: Text(
-                    '${index + 1}',
-                    style: _textStyle,
-                  ),
+                  child: Text('${index + 1}', style: _textStyle),
                 ),
               ),
             ),
@@ -94,20 +91,25 @@ class _TextEditorWithLineNumbersState extends State<TextEditorWithLineNumbers> {
           Expanded(
             child: Padding(
               padding: const EdgeInsets.only(top: 4), // HACK: match ListView
-              child: TextField(
-                scrollController: _textScroll,
-                controller: _textController,
-                maxLines: null,
-                expands: true,
-                onChanged: _textChanged,
-                focusNode: _textFocusNode,
-                decoration:
-                    const InputDecoration.collapsed(hintText: 'enter text'),
+              child: SizeChangedNotifier(
+                onChanged: _sizeChanged,
+                child: TextField(
+                  scrollController: _textScroll,
+                  controller: _textController,
+                  maxLines: null,
+                  expands: true,
+                  onChanged: _textChanged,
+                  focusNode: _textFocusNode,
+                  decoration:
+                      const InputDecoration.collapsed(hintText: 'enter text'),
+                ),
               ),
             ),
           ),
         ],
       );
+
+  void _sizeChanged() => _textChanged(_textController.text);
 
   void _textChanged(String value) {
     final ets = _getEditableTextState(_textFocusNode);
@@ -154,7 +156,43 @@ class _TextEditorWithLineNumbersState extends State<TextEditorWithLineNumbers> {
     final tsps = ets.renderEditable.getEndpointsForSelection(selection);
     return tsps.last.point.dy - tsps.first.point.dy + 19; // HACK
   }
+
 }
 
-// TODO: https://api.flutter.dev/flutter/widgets/SizeChangedLayoutNotifier-class.html
 // TODO: fix the fencepost!
+
+class SizeChangedNotifier extends StatefulWidget {
+  final VoidCallback onChanged;
+  final Widget child;
+
+  const SizeChangedNotifier({
+    required this.onChanged,
+    required this.child,
+    Key? key,
+  }) : super(key: key);
+
+  @override
+  _SizeChangedNotifierState createState() => _SizeChangedNotifierState();
+}
+
+class _SizeChangedNotifierState extends State<SizeChangedNotifier> {
+  var _constraints = BoxConstraints.tight(Size.zero);
+
+  @override
+  Widget build(BuildContext context) => LayoutBuilder(
+        builder: (BuildContext context, BoxConstraints constraints) {
+          if (_constraints != constraints) {
+            _constraints = constraints;
+            WidgetsBinding.instance
+                ?.addPostFrameCallback((_) => widget.onChanged());
+          }
+          return widget.child;
+        },
+      );
+
+  @override
+  void didChangeDependencies() {
+    super.didChangeDependencies();
+    _constraints = BoxConstraints.tight(Size.zero);
+  }
+}
