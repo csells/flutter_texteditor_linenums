@@ -3,9 +3,6 @@ import 'dart:math';
 import 'package:flutter/material.dart';
 import 'package:linked_scroll_controller/linked_scroll_controller.dart';
 
-// TODO: fix the fencepost
-// TODO: make the scrollbars always show
-
 void main() => runApp(const App());
 
 class App extends StatelessWidget {
