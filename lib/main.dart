@@ -1,3 +1,5 @@
+import 'dart:math';
+
 import 'package:flutter/material.dart';
 import 'package:linked_scroll_controller/linked_scroll_controller.dart';
 
@@ -44,6 +46,8 @@ class _TextEditorWithLineNumbersState extends State<TextEditorWithLineNumbers> {
   late final ScrollController _textScroll;
   late final ScrollController _numbersScroll;
   late final TextStyle _textStyle;
+  late final ScrollBehavior _noScrollbarsBehavior;
+  late final ScrollBehavior _scrollbarsBehavior;
   final _textFocusNode = FocusNode();
   List<double> _lineHeights = [];
 
@@ -57,8 +61,15 @@ class _TextEditorWithLineNumbersState extends State<TextEditorWithLineNumbers> {
   @override
   void didChangeDependencies() {
     super.didChangeDependencies();
+
     _textStyle =
         Theme.of(context).textTheme.subtitle1!.copyWith(color: Colors.black26);
+
+    _noScrollbarsBehavior =
+        ScrollConfiguration.of(context).copyWith(scrollbars: false);
+
+    _scrollbarsBehavior =
+        ScrollConfiguration.of(context).copyWith(scrollbars: true);
   }
 
   @override
@@ -76,18 +87,22 @@ class _TextEditorWithLineNumbersState extends State<TextEditorWithLineNumbers> {
           SizedBox(
             width: 50, // HACK: width of four characters
             child: ScrollConfiguration(
-              behavior: ScrollConfiguration.of(context).copyWith(
-                scrollbars: false,
-              ),
+              behavior: _noScrollbarsBehavior,
               child: ListView.builder(
                 controller: _numbersScroll,
                 itemCount: _lineHeights.length,
                 shrinkWrap: true,
                 physics: null,
-                itemBuilder: (context, index) => SizedBox(
-                  height: _lineHeights[index],
-                  child: Text('${index + 1}', style: _textStyle),
-                ),
+                itemBuilder: (context, index) {
+                  assert(_lineHeights[index] >= 0);
+                  return SizedBox(
+                    height: _lineHeights[index],
+                    child: ScrollConfiguration(
+                      behavior: _scrollbarsBehavior,
+                      child: Text('${index + 1}', style: _textStyle),
+                    ),
+                  );
+                },
               ),
             ),
           ),
@@ -119,7 +134,7 @@ class _TextEditorWithLineNumbersState extends State<TextEditorWithLineNumbers> {
     if (ets != null) {
       final lengths = _getLineLengths(value);
       final selections = _getTextSelections(lengths);
-      print('');
+      _log('');
       final singleLineHeight = _getSingleLineHeight(ets);
       final heights = [
         for (final sel in selections)
@@ -169,24 +184,35 @@ class _TextEditorWithLineNumbersState extends State<TextEditorWithLineNumbers> {
     }
   }
 
-double _getSingleLineHeight(EditableTextState ets) => ets.renderEditable
-    .getEndpointsForSelection(const TextSelection.collapsed(offset: 0))
-    .first
-    .point
-    .dy
-    .floorToDouble();
+  double _getSingleLineHeight(EditableTextState ets) => max(
+      ets.renderEditable
+          .getEndpointsForSelection(const TextSelection.collapsed(offset: 0))
+          .first
+          .point
+          .dy
+          .floorToDouble(),
+      19); // HACK
 
-double _getWrappedLineHeight(
-  EditableTextState ets,
-  TextSelection selection,
-  double singleLineHeight,
-) {
-  final tsps = ets.renderEditable.getEndpointsForSelection(selection);
-  final height = tsps.last.point.dy - tsps.first.point.dy + singleLineHeight;
-  print(
-      '_getWrappedLineHeight for baseOffset= ${selection.baseOffset}, extentOffset= ${selection.extentOffset}: first.dy= ${tsps.first.point.dy}, last.dy= ${tsps.last.point.dy} is $height');
-  return height;
-}
+  double _getWrappedLineHeight(
+    EditableTextState ets,
+    TextSelection selection,
+    double singleLineHeight,
+  ) {
+    final tsps = ets.renderEditable.getEndpointsForSelection(selection);
+    final height = max(
+      tsps.last.point.dy - tsps.first.point.dy + singleLineHeight,
+      singleLineHeight,
+    );
+    _log(
+        '_getWrappedLineHeight for baseOffset= ${selection.baseOffset}, extentOffset= ${selection.extentOffset}: first.dy= ${tsps.first.point.dy}, last.dy= ${tsps.last.point.dy} is $height');
+    assert(height >= singleLineHeight);
+    return height;
+  }
+
+  void _log(Object o) {
+    const log = true;
+    if (log) debugPrint(o.toString());
+  }
 }
 
 class SizeChangedNotifier extends StatefulWidget {
