@@ -1,16 +1,13 @@
 # flutter_texteditor_linenums
+A sample of a text field with line numbers in Flutter
 
-A new Flutter project.
+![screen capture](readme/screencap.gif)
 
-## Getting Started
+This sample shows off the following:
+- creating line numbers on the fly via `ListView.builder`
+- re-calculating line number heights as text changes based on wrapping
+- re-calculating line number heights when the `TextField` size changes
+- automatically showing scrollbars when there's a enough text to scroll
 
-This project is a starting point for a Flutter application.
-
-A few resources to get you started if this is your first Flutter project:
-
-- [Lab: Write your first Flutter app](https://flutter.dev/docs/get-started/codelab)
-- [Cookbook: Useful Flutter samples](https://flutter.dev/docs/cookbook)
-
-For help getting started with Flutter, view our
-[online documentation](https://flutter.dev/docs), which offers tutorials,
-samples, guidance on mobile development, and a full API reference.
+You can [give it a try live online
+here](https://flutter-sample-hosting.web.app/#/).

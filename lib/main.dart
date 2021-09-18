@@ -207,7 +207,8 @@ class _TextEditorWithLineNumbersState extends State<TextEditorWithLineNumbers> {
   }
 
   void _log(Object o) {
-    const log = true;
+    // const log = true;
+    const log = false;
     if (log) debugPrint(o.toString());
   }
 }
