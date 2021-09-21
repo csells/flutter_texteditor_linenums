@@ -138,7 +138,7 @@ class _TextEditorWithLineNumbersState extends State<TextEditorWithLineNumbers> {
           for (final sel in selections)
             _getWrappedLineHeight(ets, sel, singleLineHeight)
         ];
-        setState(() => _lineHeights = heights.toList());
+        setState(() => _lineHeights = heights);
       });
     }
   }
