@@ -177,8 +177,7 @@ class _TextEditorWithLineNumbersState extends State<TextEditorWithLineNumbers> {
     var base = 0;
     for (final length in lengths) {
       yield TextSelection(
-          baseOffset: base,
-          extentOffset: length == 0 ? base : base + length);
+          baseOffset: base, extentOffset: length == 0 ? base : base + length);
       base = base + length + 1;
     }
   }
