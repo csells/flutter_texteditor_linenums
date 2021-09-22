@@ -138,7 +138,7 @@ class _TextEditorWithLineNumbersState extends State<TextEditorWithLineNumbers> {
           for (final sel in selections)
             _getWrappedLineHeight(ets, sel, singleLineHeight)
         ];
-        setState(() => _lineHeights = heights.toList());
+        setState(() => _lineHeights = heights);
       });
     }
   }
@@ -176,9 +176,7 @@ class _TextEditorWithLineNumbersState extends State<TextEditorWithLineNumbers> {
   Iterable<TextSelection> _getTextSelections(Iterable<int> lengths) sync* {
     var base = 0;
     for (final length in lengths) {
-      yield TextSelection(
-          baseOffset: base,
-          extentOffset: length == 0 ? base : base + length);
+      yield TextSelection(baseOffset: base, extentOffset: base + length);
       base = base + length + 1;
     }
   }
